@@ -1,9 +1,9 @@
 package ds_store
 
 import (
-	"errors"
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"reflect"
 	"unicode/utf16"
 	"unicode/utf8"
@@ -11,29 +11,29 @@ import (
 )
 
 type Block struct {
-	Allocator 	*Allocator
-	Offset 		uint32
-	Size		uint32
-	Data		[]byte
-	Pos			uint32
+	Allocator *Allocator
+	Offset    uint32
+	Size      uint32
+	Data      []byte
+	Pos       uint32
 }
 
 type Allocator struct {
-	Data	[]byte
-	Pos		uint32 
-	Root	*Block
-	Offsets	[]uint32
-	Toc		map[string]uint32
-	FreeList	map[uint32][]uint32
-} 
+	Data     []byte
+	Pos      uint32
+	Root     *Block
+	Offsets  []uint32
+	Toc      map[string]uint32
+	FreeList map[uint32][]uint32
+}
 
 func NewBlock(a *Allocator, pos uint32, size uint32) (block *Block, err error) {
-	block = &Block{Size: size, Allocator: a, Data: a.Data[pos+0x4:pos+0x4+size]}
+	block = &Block{Size: size, Allocator: a, Data: a.Data[pos+0x4 : pos+0x4+size]}
 	return block, nil
 }
 
 func (block *Block) readUint32() (value uint32, err error) {
-	if block.Size - block.Pos < 4 {
+	if block.Size-block.Pos < 4 {
 		return 0, errors.New("Not enough bytes to read")
 	}
 	data := bytes.NewBuffer(block.Data)
@@ -44,7 +44,7 @@ func (block *Block) readUint32() (value uint32, err error) {
 }
 
 func (block *Block) readByte() (value byte, err error) {
-	if block.Size - block.Pos < 1 {
+	if block.Size-block.Pos < 1 {
 		return 0, errors.New("Not enough bytes to read")
 	}
 	data := bytes.NewBuffer(block.Data)
@@ -55,7 +55,7 @@ func (block *Block) readByte() (value byte, err error) {
 }
 
 func (block *Block) readBuf(length int) (buf []byte, err error) {
-	if int(block.Size) - int(block.Pos) < length {
+	if int(block.Size)-int(block.Pos) < length {
 		return nil, errors.New("Not enough bytes to read")
 	}
 	data := bytes.NewBuffer(block.Data)
@@ -75,12 +75,12 @@ func (block *Block) readFileName() (name string, err error) {
 	if err != nil {
 		return "", err
 	}
-	
+
 	/*
-	sid, err := block.readUint32()
-	if err != nil {
-		return "", err
-	}
+		sid, err := block.readUint32()
+		if err != nil {
+			return "", err
+		}
 	*/
 	block.skip(4)
 
@@ -90,30 +90,30 @@ func (block *Block) readFileName() (name string, err error) {
 	}
 	t := string(stype)
 	switch {
-		case t == "bool":
-			block.skip(1)
-			break
-		case t == "type" ||t == "long" || t == "shor":
-			block.skip(4)
-			break
-		case t == "comp" || t == "dutc":
-			block.skip(8)
-			break
-		case t == "blob":
-			blen, err := block.readUint32()
-			if err != nil {
-				return "", err
-			}
-			block.skip(blen)
-			break
-		case t == "ustr":
-			blen, err := block.readUint32()
-			if err != nil {
-				return "", err
-			}
-			block.skip(2 * blen)
-		default:
-			panic("Unknown file format.")
+	case t == "bool":
+		block.skip(1)
+		break
+	case t == "type" || t == "long" || t == "shor":
+		block.skip(4)
+		break
+	case t == "comp" || t == "dutc":
+		block.skip(8)
+		break
+	case t == "blob":
+		blen, err := block.readUint32()
+		if err != nil {
+			return "", err
+		}
+		block.skip(blen)
+		break
+	case t == "ustr":
+		blen, err := block.readUint32()
+		if err != nil {
+			return "", err
+		}
+		block.skip(2 * blen)
+	default:
+		panic("Unknown file format.")
 	}
 
 	name = utf16be2utf8(buf)
@@ -125,7 +125,7 @@ func (block *Block) skip(i uint32) {
 }
 
 func NewAllocator(data []byte) (a *Allocator, err error) {
-	a = &Allocator{Data:  data}//bytes.NewBuffer(data)}
+	a = &Allocator{Data: data} //bytes.NewBuffer(data)}
 	a.Toc = make(map[string]uint32)
 	a.FreeList = make(map[uint32][]uint32)
 
@@ -134,7 +134,7 @@ func NewAllocator(data []byte) (a *Allocator, err error) {
 		return nil, err
 	}
 
-	a.Root,_  = NewBlock(a, offset, size)
+	a.Root, _ = NewBlock(a, offset, size)
 
 	err = a.readOffsets()
 	if err != nil {
@@ -154,7 +154,6 @@ func NewAllocator(data []byte) (a *Allocator, err error) {
 	return a, err
 }
 
-
 func (a *Allocator) GetBlock(bid uint32) (block *Block, err error) {
 	addr := a.Offsets[bid]
 	offset := int(addr) & ^0x1f
@@ -168,7 +167,7 @@ func (a *Allocator) GetBlock(bid uint32) (block *Block, err error) {
 }
 
 func (a *Allocator) TraverseFromRootNode() (filenames []string, err error) {
-	rootBlk,err := a.GetBlock(a.Toc["DSDB"])
+	rootBlk, err := a.GetBlock(a.Toc["DSDB"])
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +191,7 @@ func (a *Allocator) TraverseFromRootNode() (filenames []string, err error) {
 	if err != nil {
 		return nil, err
 	}*/
-	rootBlk.skip(4*4)
+	rootBlk.skip(4 * 4)
 
 	return a.Traverse(rootNode)
 }
@@ -210,7 +209,7 @@ func (a *Allocator) Traverse(bid uint32) (filenames []string, err error) {
 	if err != nil {
 		return nil, err
 	}
-	if nextPtr > 0{
+	if nextPtr > 0 {
 		//This may be broken
 		for i := 0; i < int(count); i++ {
 			next, err := node.readUint32()
@@ -221,8 +220,8 @@ func (a *Allocator) Traverse(bid uint32) (filenames []string, err error) {
 			if err != nil {
 				return nil, err
 			}
-			for _,f := range files {
-				filenames = append(filenames,f)
+			for _, f := range files {
+				filenames = append(filenames, f)
 			}
 			f, err := node.readFileName()
 			if err != nil {
@@ -234,8 +233,8 @@ func (a *Allocator) Traverse(bid uint32) (filenames []string, err error) {
 		if err != nil {
 			return nil, err
 		}
-		for _,f := range files {
-			filenames = append(filenames,f)
+		for _, f := range files {
+			filenames = append(filenames, f)
 		}
 	} else {
 		for i := 0; i < int(count); i++ {
@@ -244,14 +243,14 @@ func (a *Allocator) Traverse(bid uint32) (filenames []string, err error) {
 				return nil, err
 			}
 			filenames = append(filenames, f)
-		} 		
+		}
 	}
 
 	return filenames, nil
 }
 
 func (a *Allocator) readFreeList() error {
-	for i:=0; i < 32; i++ {
+	for i := 0; i < 32; i++ {
 		blkcount, err := a.Root.readUint32()
 		if err != nil {
 			return err
@@ -260,15 +259,15 @@ func (a *Allocator) readFreeList() error {
 			continue
 		}
 		a.FreeList[uint32(i)] = make([]uint32, 0)
- 		for k:=0; k < int(blkcount); k++ {
- 			val, err := a.Root.readUint32()
- 			if err != nil {
- 				return err
- 			}
- 			if val == 0 {
- 				continue
- 			}
- 			a.FreeList[uint32(i)] = append(a.FreeList[uint32(i)],val)
+		for k := 0; k < int(blkcount); k++ {
+			val, err := a.Root.readUint32()
+			if err != nil {
+				return err
+			}
+			if val == 0 {
+				continue
+			}
+			a.FreeList[uint32(i)] = append(a.FreeList[uint32(i)], val)
 		}
 	}
 	return nil
@@ -303,7 +302,7 @@ func (a *Allocator) readOffsets() error {
 		return err
 	}
 	a.Root.skip(4)
-	
+
 	for offcount := int(count); offcount > 0; offcount -= 256 {
 		for i := 0; i < 256; i++ {
 			val, err := a.Root.readUint32()
