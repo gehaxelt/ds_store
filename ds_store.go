@@ -171,7 +171,6 @@ func (a *Allocator) GetBlock(bid uint32) (block *Block, err error) {
 }
 
 func (a *Allocator) TraverseFromRootNode() (filenames []string, err error) {
-	_ = "breakpoint"
 	rootBlk, err := a.GetBlock(a.Toc["DSDB"])
 	if err != nil {
 		return nil, err
