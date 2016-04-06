@@ -155,7 +155,11 @@ func NewAllocator(data []byte) (a *Allocator, err error) {
 }
 
 func (a *Allocator) GetBlock(bid uint32) (block *Block, err error) {
+	if !contains(a.Offsets, bid) {
+		return nil, errors.New("Cannot find key in Offset-Table")
+	}
 	addr := a.Offsets[bid]
+
 	offset := int(addr) & ^0x1f
 	size := 1 << (uint(addr) & 0x1f)
 
@@ -167,6 +171,7 @@ func (a *Allocator) GetBlock(bid uint32) (block *Block, err error) {
 }
 
 func (a *Allocator) TraverseFromRootNode() (filenames []string, err error) {
+	_ = "breakpoint"
 	rootBlk, err := a.GetBlock(a.Toc["DSDB"])
 	if err != nil {
 		return nil, err
@@ -384,4 +389,14 @@ func utf16be2utf8(utf16be []byte) string {
 		bi += utf8.EncodeRune(buf[bi:], r)
 	}
 	return string(buf)
+}
+
+//taken from http://stackoverflow.com/questions/10485743/contains-method-for-a-slice
+func contains(s []uint32, e uint32) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }
