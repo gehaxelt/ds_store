@@ -88,33 +88,41 @@ func (block *Block) readFileName() (name string, err error) {
 	if err != nil {
 		return "", err
 	}
+
 	t := string(stype)
+	bytesToSkip := -1
+
 	switch {
 	case t == "bool":
-		block.skip(1)
+		bytesToSkip = 1
 		break
 	case t == "type" || t == "long" || t == "shor":
-		block.skip(4)
+		bytesToSkip = 4
 		break
 	case t == "comp" || t == "dutc":
-		block.skip(8)
+		bytesToSkip = 8
 		break
 	case t == "blob":
 		blen, err := block.readUint32()
 		if err != nil {
-			return "", err
+			break
 		}
-		block.skip(blen)
+		bytesToSkip = int(blen)
 		break
 	case t == "ustr":
 		blen, err := block.readUint32()
 		if err != nil {
-			return "", err
+			break
 		}
-		block.skip(2 * blen)
+		bytesToSkip = int(2 * blen)
 	default:
-		panic("Unknown file format.")
+		break
 	}
+
+	if bytesToSkip <= 0 {
+		return "", errors.New("Unknown file format")
+	}
+	block.skip(uint32(bytesToSkip))
 
 	name = utf16be2utf8(buf)
 	return name, nil
