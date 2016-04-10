@@ -28,6 +28,9 @@ type Allocator struct {
 }
 
 func NewBlock(a *Allocator, pos uint32, size uint32) (block *Block, err error) {
+	if len(a.Data) < pos+0x4+size {
+		return nil, errors.New("Not enought Data")
+	}
 	block = &Block{Size: size, Allocator: a, Data: a.Data[pos+0x4 : pos+0x4+size]}
 	return block, nil
 }
@@ -142,7 +145,10 @@ func NewAllocator(data []byte) (a *Allocator, err error) {
 		return nil, err
 	}
 
-	a.Root, _ = NewBlock(a, offset, size)
+	a.Root, err = NewBlock(a, offset, size)
+	if err != nil {
+		return nil, err
+	}
 
 	err = a.readOffsets()
 	if err != nil {
